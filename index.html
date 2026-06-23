@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Proof of Delivery</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f5;color:#111;min-height:100vh}
+.app{max-width:480px;margin:0 auto;padding:1rem}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding:1rem;background:#fff;border-radius:12px;border:1px solid #e5e5e5}
+.hicon{width:40px;height:40px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px}
+h1{font-size:18px;font-weight:600}
+.sub{font-size:12px;color:#888}
+.tabs{display:flex;gap:6px;margin-bottom:1rem}
+.tab{flex:1;padding:8px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;color:#555}
+.tab.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.view{display:none}
+.view.active{display:block}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.card-title{font-size:12px;color:#888;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
+.field{margin-bottom:10px}
+.field label{font-size:12px;color:#666;display:block;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff}
+.field textarea{resize:vertical;min-height:60px}
+.photo-zone{border:2px dashed #ddd;border-radius:10px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .15s;position:relative;overflow:hidden}
+.photo-zone:hover{background:#f9fafb}
+.photo-zone span{font-size:13px;color:#888}
+#photo-preview{width:100%;height:150px;object-fit:cover;border-radius:10px;display:none}
+.gps-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f9fafb;border-radius:8px;font-size:12px;margin-bottom:10px}
+.dot{width:9px;height:9px;border-radius:50%;background:#ccc;flex-shrink:0}
+.dot.ok{background:#22c55e}
+.dot.loading{background:#f59e0b}
+.gps-text{flex:1;color:#666}
+.btn-gps{padding:6px 12px;font-size:12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer}
+.field-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0}
+.field-row:last-child{border-bottom:none}
+.fl{font-size:12px;color:#888}
+.fv{font-size:12px;font-weight:500}
+.btn-main{width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-main:disabled{opacity:.4;cursor:not-allowed}
+.btn-main:hover:not(:disabled){background:#1d4ed8}
+.btn-sec{padding:8px 14px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:6px}
+.status{font-size:13px;text-align:center;padding:8px;border-radius:8px;margin-bottom:8px;display:none}
+.status.show{display:block}
+.status.ok{background:#dcfce7;color:#15803d}
+.status.err{background:#fee2e2;color:#dc2626}
+.status.info{background:#dbeafe;color:#1d4ed8}
+.badge{font-size:11px;padding:3px 9px;border-radius:99px}
+.badge-s{background:#dcfce7;color:#15803d}
+.badge-w{background:#fef9c3;color:#854d0e}
+.log-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.log-item:last-child{border-bottom:none}
+.thumb{width:44px;height:44px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:22px}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.li-info{flex:1;min-width:0}
+.li-no{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-meta{font-size:11px;color:#888}
+.empty{text-align:center;padding:2rem;color:#aaa;font-size:14px}
+.setup-step{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f0f0f0}
+.setup-step:last-child{border-bottom:none}
+.snum{width:24px;height:24px;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.stext{font-size:13px;color:#555;line-height:1.5}
+.stext a{color:#2563eb}
+.conn-ok{display:none;background:#dcfce7;border:1px solid #bbf7d0;border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:#15803d;display:none;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="hicon">📦</div>
+    <div>
+      <h1>Proof of Delivery</h1>
+      <p class="sub">Foto → Google Drive · Data → Google Sheets</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('setup',this)">⚙️ Setup</button>
+    <button class="tab" onclick="switchTab('capture',this)">📷 Catat</button>
+    <button class="tab" onclick="switchTab('log',this)">📋 Log</button>
+  </div>
+
+  <div id="view-setup" class="view active">
+    <div class="card">
+      <div class="card-title">🔑 Konfigurasi Google</div>
+      <div class="field">
+        <label>Google OAuth Client ID</label>
+        <input type="text" id="client-id" placeholder="xxxxx.apps.googleusercontent.com" oninput="checkConfig()"/>
+      </div>
+      <div class="field">
+        <label>Nama folder Drive</label>
+        <input type="text" id="folder-name" value="POD Photos"/>
+      </div>
+      <div class="field">
+        <label>Nama spreadsheet log</label>
+        <input type="text" id="sheet-name" value="POD Log"/>
+      </div>
+      <div id="setup-status" class="status"></div>
+      <button class="btn-main" id="connect-btn" onclick="connectGoogle()" disabled>
+        🔗 Connect ke Google
+      </button>
+    </div>
+
+    <div class="card" id="conn-info" style="display:none">
+      <div class="card-title">✅ Status koneksi</div>
+      <div class="field-row"><span class="fl">Akun</span><span class="fv" id="conn-email">—</span></div>
+      <div class="field-row"><span class="fl">Folder Drive</span><span class="fv" id="conn-folder">—</span></div>
+      <div class="field-row"><span class="fl">Spreadsheet</span><span class="fv" id="conn-sheet">—</span></div>
+      <div class="field-row"><span class="fl">Status</span><span class="badge badge-s">Terhubung ✓</span></div>
+    </div>
+  </div>
+
+  <div id="view-capture" class="view">
+    <div class="card">
+      <div class="card-title">📄 Info pengiriman</div>
+      <div class="field"><label>No. Resi</label><input type="text" id="f-resi" placeholder="JNE-20240623-0001"/></div>
+      <div class="field"><label>Nama penerima</label><input type="text" id="f-penerima" placeholder="Nama penerima"/></div>
+      <div class="field"><label>Alamat</label><textarea id="f-alamat" placeholder="Alamat lengkap"></textarea></div>
+      <div class="field"><label>Catatan (opsional)</label><input type="text" id="f-catatan" placeholder="Catatan tambahan"/></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📸 Foto bukti</div>
+      <div class="photo-zone" id="photo-zone" onclick="document.getElementById('file-input').click()">
+        <img id="photo-preview" alt="foto bukti"/>
+        <div id="pz-placeholder">
+          <div style="font-size:36px;text-align:center">📷</div>
+          <span>Ketuk untuk ambil foto</span>
+        </div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" capture="environment" onchange="handlePhoto(this)" style="display:none"/>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📍 Lokasi & waktu</div>
+      <div class="gps-row">
+        <div class="dot" id="gps-dot"></div>
+        <span class="gps-text" id="gps-text">Tekan tombol deteksi lokasi</span>
+        <button class="btn-gps" onclick="getLocation()">📡 Deteksi</button>
+      </div>
+      <div class="field-row"><span class="fl">Waktu</span><span class="fv" id="ts-display">—</span></div>
+    </div>
+
+    <div id="upload-status" class="status"></div>
+    <button class="btn-main" id="submit-btn" onclick="submitPOD()">
+      ☁️ Simpan ke Drive & Sheets
+    </button>
+    <p style="font-size:11px;color:#aaa;text-align:center;margin-top:8px">Foto tersimpan di Google Drive · Data di Google Sheets</p>
+  </div>
+
+  <div id="view-log" class="view">
+    <div class="card">
+      <div class="card-title">📋 Log pengiriman sesi ini</div>
+      <div id="log-list"><div class="empty">Belum ada pengiriman dicatat</div></div>
+    </div>
+    <button class="btn-sec" style="width:100%;justify-content:center" onclick="openSheets()">
+      📊 Buka Google Sheets ↗
+    </button>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+let gpsData=null,photoFile=null,photoDataUrl=null;
+let accessToken=null,folderId=null,sheetId=null,sheetUrl=null;
+let logItems=[];
+
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-'+tab).classList.add('active');
+}
+
+function checkConfig(){
+  const cid=document.getElementById('client-id').value.trim();
+  document.getElementById('connect-btn').disabled=!cid;
+}
+
+function setStatus(id,msg,type){
+  const el=document.getElementById(id);
+  el.textContent=msg;
+  el.className='status show'+(type?' '+type:'');
+}
+
+function connectGoogle(){
+  const clientId=document.getElementById('client-id').value.trim();
+  if(!clientId)return;
+  setStatus('setup-status','Membuka login Google...','info');
+  const client=google.accounts.oauth2.initTokenClient({
+    client_id:clientId,
+    scope:'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email',
+    callback:async(resp)=>{
+      if(resp.error){setStatus('setup-status','Error: '+resp.error,'err');return;}
+      accessToken=resp.access_token;
+      setStatus('setup-status','Terhubung! Menyiapkan folder & sheet...','info');
+      await setupDriveAndSheets();
+    }
+  });
+  client.requestAccessToken();
+}
+
+async function apiFetch(url,opts){
+  const res=await fetch(url,{...opts,headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json',...(opts&&opts.headers)}});
+  return res.json();
+}
+
+async function setupDriveAndSheets(){
+  try{
+    const folderName=document.getElementById('folder-name').value.trim();
+    const sheetName=document.getElementById('sheet-name').value.trim();
+
+    const fSearch=await apiFetch(`https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id)`);
+    if(fSearch.files&&fSearch.files.length>0){folderId=fSearch.files[0].id;}
+    else{const fc=await apiFetch('https://www.googleapis.com/drive/v3/files',{method:'POST',body:JSON.stringify({name:folderName,mimeType:'application/vnd.google-apps.folder'})});folderId=fc.id;}
+
+    const sSearch=await apiFetch(`https://www.googleapis.com/drive/v3/files?q=name='${sheetName}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false&fields=files(id)`);
+    if(sSearch.files&&sSearch.files.length>0){sheetId=sSearch.files[0].id;}
+    else{
+      const sc=await apiFetch('https://www.googleapis.com/drive/v3/files',{method:'POST',body:JSON.stringify({name:sheetName,mimeType:'application/vnd.google-apps.spreadsheet'})});
+      sheetId=sc.id;
+      await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:append?valueInputOption=RAW`,{method:'POST',body:JSON.stringify({values:[['Timestamp','No. Resi','Penerima','Alamat','GPS Lat','GPS Lng','Catatan','Link Foto']]})});
+    }
+    sheetUrl='https://docs.google.com/spreadsheets/d/'+sheetId;
+
+    const uInfo=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json());
+    document.getElementById('conn-email').textContent=uInfo.email||'—';
+    document.getElementById('conn-folder').textContent=folderName;
+    document.getElementById('conn-sheet').textContent=sheetName;
+    document.getElementById('conn-info').style.display='block';
+    setStatus('setup-status','✅ Siap digunakan! Buka tab Catat untuk mulai.','ok');
+  }catch(e){setStatus('setup-status','Gagal: '+e.message,'err');}
+}
+
+function getLocation(){
+  const dot=document.getElementById('gps-dot');
+  const txt=document.getElementById('gps-text');
+  dot.className='dot loading';
+  txt.textContent='Mendeteksi...';
+  if(!navigator.geolocation){txt.textContent='GPS tidak tersedia';return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    gpsData={lat:pos.coords.latitude.toFixed(6),lng:pos.coords.longitude.toFixed(6)};
+    dot.className='dot ok';
+    txt.textContent=gpsData.lat+', '+gpsData.lng;
+    document.getElementById('ts-display').textContent=new Date().toLocaleString('id-ID');
+  },()=>{
+    gpsData={lat:'0.000000',lng:'0.000000'};
+    dot.className='dot ok';
+    txt.textContent='Lokasi tidak terdeteksi (manual)';
+    document.getElementById('ts-display').textContent=new Date().toLocaleString('id-ID');
+  });
+}
+
+function handlePhoto(input){
+  photoFile=input.files[0];
+  if(!photoFile)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    photoDataUrl=e.target.result;
+    const prev=document.getElementById('photo-preview');
+    prev.src=photoDataUrl;prev.style.display='block';
+    document.getElementById('pz-placeholder').style.display='none';
+    document.getElementById('photo-zone').style.border='none';
+  };
+  reader.readAsDataURL(photoFile);
+}
+
+async function uploadPhoto(file,resi){
+  const metadata={name:resi+'_'+Date.now()+'.jpg',parents:[folderId]};
+  const form=new FormData();
+  form.append('metadata',new Blob([JSON.stringify(metadata)],{type:'application/json'}));
+  form.append('file',file);
+  const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',{method:'POST',headers:{Authorization:'Bearer '+accessToken},body:form});
+  return res.json();
+}
+
+async function submitPOD(){
+  const resi=document.getElementById('f-resi').value.trim();
+  const penerima=document.getElementById('f-penerima').value.trim();
+  const alamat=document.getElementById('f-alamat').value.trim();
+  const catatan=document.getElementById('f-catatan').value.trim();
+  if(!resi||!penerima){setStatus('upload-status','Isi No. Resi dan Nama Penerima dulu','err');return;}
+  if(!accessToken){setStatus('upload-status','Belum connect ke Google. Setup dulu di tab Setup','err');return;}
+  if(!photoFile){setStatus('upload-status','Foto bukti belum diambil','err');return;}
+  if(!gpsData){setStatus('upload-status','Lokasi GPS belum dideteksi','err');return;}
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;
+  setStatus('upload-status','Mengupload foto ke Drive...','info');
+  try{
+    const uploaded=await uploadPhoto(photoFile,resi);
+    const photoLink=uploaded.webViewLink||'';
+    setStatus('upload-status','Mencatat data ke Sheets...','info');
+    const ts=new Date().toLocaleString('id-ID');
+    await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:append?valueInputOption=RAW`,{method:'POST',body:JSON.stringify({values:[[ts,resi,penerima,alamat,gpsData.lat,gpsData.lng,catatan,photoLink]]})});
+    logItems.unshift({resi,penerima,ts,photo:photoDataUrl,link:photoLink});
+    renderLog();
+    setStatus('upload-status','✅ Berhasil disimpan ke Drive & Sheets!','ok');
+    document.getElementById('f-resi').value='';
+    document.getElementById('f-penerima').value='';
+    document.getElementById('f-alamat').value='';
+    document.getElementById('f-catatan').value='';
+    photoFile=null;photoDataUrl=null;gpsData=null;
+    document.getElementById('photo-preview').style.display='none';
+    document.getElementById('pz-placeholder').style.display='';
+    document.getElementById('photo-zone').style.border='';
+    document.getElementById('file-input').value='';
+    document.getElementById('gps-dot').className='dot';
+    document.getElementById('gps-text').textContent='Tekan tombol deteksi lokasi';
+    document.getElementById('ts-display').textContent='—';
+  }catch(e){setStatus('upload-status','Gagal: '+e.message,'err');}
+  btn.disabled=false;
+}
+
+function renderLog(){
+  const list=document.getElementById('log-list');
+  if(!logItems.length){list.innerHTML='<div class="empty">Belum ada pengiriman dicatat</div>';return;}
+  list.innerHTML=logItems.map(l=>`
+    <div class="log-item">
+      <div class="thumb">${l.photo?'<img src="'+l.photo+'" alt="foto"/>':"📦"}</div>
+      <div class="li-info">
+        <div class="li-no">${l.resi}</div>
+        <div class="li-meta">${l.penerima} · ${l.ts}</div>
+      </div>
+      <span class="badge badge-s">Tersimpan</span>
+    </div>
+  `).join('');
+}
+
+function openSheets(){
+  if(sheetUrl)window.open(sheetUrl,'_blank');
+  else alert('Belum terhubung ke Google Sheets.');
+}
+</script>
+</body>
+</html>
