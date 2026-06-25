@@ -481,9 +481,7 @@
         </div>
         <div class="address-content">
           <div class="recipient-name" id="label-nama">—</div>
-          <div class="recipient-phone" id="label-hp">—</div>
           <div class="recipient-address" id="label-alamat">—</div>
-          <div class="recipient-city" id="label-kota">—</div>
         </div>
       </div>
 
@@ -508,6 +506,10 @@
         <div class="info-badge">
           <div class="badge-label">Total Qty</div>
           <div class="badge-value" id="label-totalqty">—</div>
+        </div>
+        <div class="info-badge">
+          <div class="badge-label">Total Jenis</div>
+          <div class="badge-value" id="label-totaljenis">—</div>
         </div>
         <div class="info-badge">
           <div class="badge-label">Tgl Kirim</div>
@@ -626,15 +628,10 @@
   }
 
   function renderLabel(row) {
-    document.getElementById('label-nosj').textContent  = col(row, 'No.Surat Jalan') || '—';
-    document.getElementById('label-nama').textContent  = col(row, 'Nama Penerima')   || '—';
-    document.getElementById('label-hp').textContent    = col(row, 'No. HP Penerima') || '—';
+    document.getElementById('label-nosj').textContent   = col(row, 'No.Surat Jalan') || '—';
+    document.getElementById('label-nama').textContent   = col(row, 'Nama Penerima')   || '—';
     document.getElementById('label-alamat').textContent = col(row, 'Alamat Penerima') || '—';
-
-    const kota = col(row, 'Kota Penerima');
-    const kode = col(row, 'Kode Pos');
-    document.getElementById('label-kota').textContent = [kota, kode].filter(Boolean).join(' — ') || '—';
-    document.getElementById('label-tgl').textContent  = col(row, 'Tgl Kirim') || '—';
+    document.getElementById('label-tgl').textContent    = col(row, 'Tgl Kirim')       || '—';
 
     // Items (maks 10)
     const tbody = document.getElementById('label-items');
@@ -661,11 +658,11 @@
 
     tbody.innerHTML += `
       <tr class="items-total-row">
-        <td colspan="3">Total Item</td>
-        <td>${itemCount} jenis</td>
+        <td colspan="4" style="text-align:right;padding-right:8px;">Total</td>
       </tr>`;
 
-    document.getElementById('label-totalqty').textContent = totalQty.toLocaleString('id-ID');
+    document.getElementById('label-totalqty').textContent  = totalQty.toLocaleString('id-ID');
+    document.getElementById('label-totaljenis').textContent = itemCount + ' jenis';
 
     const now = new Date();
     const printed = `Dicetak: ${now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' })} ${now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}`;
