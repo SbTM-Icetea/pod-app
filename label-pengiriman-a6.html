@@ -207,7 +207,7 @@
     }
 
     .label-header {
-      background: #0F172A;
+      background: #64748B;
       color: #FFFFFF;
       padding: 8px 12px;
       display: flex;
@@ -331,7 +331,7 @@
       font-size: 8pt;
     }
 
-    .items-table thead tr { background: #0F172A; color: #FFFFFF; }
+    .items-table thead tr { background: #64748B; color: #FFFFFF; }
 
     .items-table thead th {
       padding: 4px 7px;
@@ -367,8 +367,32 @@
     .badge-label { font-size: 6.5pt; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; }
     .badge-value { font-size: 9pt; font-weight: 700; color: #0F172A; margin-top: 1px; }
 
+    .total-qty-box {
+      background: #64748B;
+      border-radius: 6px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .total-qty-label {
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: #94A3B8;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .total-qty-value {
+      font-size: 18pt;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: 0.05em;
+    }
+
     .label-footer {
-      background: #0F172A;
+      background: #64748B;
       padding: 5px 12px;
       display: flex;
       justify-content: space-between;
@@ -504,10 +528,6 @@
 
       <div class="info-row">
         <div class="info-badge">
-          <div class="badge-label">Total Qty</div>
-          <div class="badge-value" id="label-totalqty">—</div>
-        </div>
-        <div class="info-badge">
           <div class="badge-label">Total Jenis</div>
           <div class="badge-value" id="label-totaljenis">—</div>
         </div>
@@ -516,7 +536,10 @@
           <div class="badge-value" id="label-tgl">—</div>
         </div>
       </div>
+
     </div>
+
+    <span id="label-totalqty" style="display:none"></span>
 
     <div class="label-footer">
       <span id="label-printed">—</span>
@@ -658,11 +681,18 @@
 
     tbody.innerHTML += `
       <tr class="items-total-row">
-        <td colspan="4" style="text-align:right;padding-right:8px;">Total</td>
+        <td colspan="2" style="text-align:right;">TOTAL QTY</td>
+        <td id="label-totalqty-inline" style="font-size:11pt;">—</td>
+        <td id="label-totalsatuan" style="font-size:8pt;font-weight:600;">—</td>
       </tr>`;
 
-    document.getElementById('label-totalqty').textContent  = totalQty.toLocaleString('id-ID');
-    document.getElementById('label-totaljenis').textContent = itemCount + ' jenis';
+    // Cari satuan dominan (satuan dari item pertama)
+    const satuanPertama = col(row, 'Item1 Satuan') || '';
+
+    document.getElementById('label-totalqty').textContent       = totalQty.toLocaleString('id-ID');
+    document.getElementById('label-totalqty-inline').textContent = totalQty.toLocaleString('id-ID');
+    document.getElementById('label-totalsatuan').textContent     = satuanPertama;
+    document.getElementById('label-totaljenis').textContent      = itemCount + ' jenis';
 
     const now = new Date();
     const printed = `Dicetak: ${now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' })} ${now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}`;
