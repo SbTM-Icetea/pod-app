@@ -651,10 +651,18 @@
   }
 
   function renderLabel(row) {
-    document.getElementById('label-nosj').textContent   = col(row, 'No.Surat Jalan') || '—';
+    const nosj = col(row, 'No.Surat Jalan') || '—';
+    document.getElementById('label-nosj').textContent   = nosj;
     document.getElementById('label-nama').textContent   = col(row, 'Nama Penerima')   || '—';
     document.getElementById('label-alamat').textContent = col(row, 'Alamat Penerima') || '—';
     document.getElementById('label-tgl').textContent    = col(row, 'Tgl Kirim')       || '—';
+
+    // Auto-detect nama perusahaan dari prefix No. Surat Jalan
+    let namaPerusahaan = companyName; // default dari config
+    if (nosj.startsWith('J/SJ'))      namaPerusahaan = 'JTA';
+    else if (nosj.startsWith('S/SJ')) namaPerusahaan = 'SbTM';
+    else if (nosj.startsWith('SJ'))   namaPerusahaan = 'TM';
+    document.getElementById('label-company').textContent = namaPerusahaan;
 
     // Items (maks 10)
     const tbody = document.getElementById('label-items');
